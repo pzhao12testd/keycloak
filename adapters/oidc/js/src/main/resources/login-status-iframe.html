@@ -53,8 +53,7 @@
             req.send();
         } else {
             if (clientId === init.clientId && origin === init.origin) {
-                var c = cookie.split('/');
-                if (sessionState === c[2]) {
+                if (sessionState === cookie) {
                     callback('unchanged');
                 } else {
                     callback('changed');
@@ -82,7 +81,7 @@
         var origin = event.origin;
         var data = event.data.split(' ');
         if (data.length != 2) {
-            return;
+            event.source.postMessage('error', origin);
         }
 
         var clientId = data[0];

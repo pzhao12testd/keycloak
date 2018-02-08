@@ -40,9 +40,7 @@ public class MigrateUserFedToComponent extends AbstractUserFedToComponent {
     protected void generateStatementsImpl() throws CustomChangeException {
         List<ProviderFactory> factories = kcSession.getKeycloakSessionFactory().getProviderFactories(UserStorageProvider.class);
         for (ProviderFactory factory : factories) {
-            if (!factory.getId().equals(LDAPConstants.LDAP_PROVIDER)) {
-                convertFedProviderToComponent(factory.getId(), null);
-            }
+            convertFedProviderToComponent(factory.getId(), null);
         }
     }
 
