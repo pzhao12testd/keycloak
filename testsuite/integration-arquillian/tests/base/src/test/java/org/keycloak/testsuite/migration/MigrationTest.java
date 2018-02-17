@@ -21,10 +21,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.NotFoundException;
-
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.TargetsContainer;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Before;
 import org.junit.Test;
 import org.keycloak.admin.client.resource.ClientResource;
@@ -39,7 +35,6 @@ import org.keycloak.models.Constants;
 import org.keycloak.models.LDAPConstants;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.DefaultAuthenticationFlows;
-import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.idm.AuthenticationExecutionExportRepresentation;
 import org.keycloak.representations.idm.AuthenticationFlowRepresentation;
 import org.keycloak.representations.idm.ClientRepresentation;
@@ -52,12 +47,7 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.authorization.PolicyRepresentation;
 import org.keycloak.storage.UserStorageProvider;
 import org.keycloak.testsuite.AbstractKeycloakTest;
-import org.keycloak.testsuite.Assert;
-import org.keycloak.testsuite.arquillian.DeploymentTargetModifier;
 import org.keycloak.testsuite.arquillian.migration.Migration;
-import org.keycloak.testsuite.runonserver.RunHelpers;
-import org.keycloak.testsuite.runonserver.RunOnServerDeployment;
-import org.keycloak.testsuite.util.OAuthClient;
 
 import static org.keycloak.testsuite.Assert.assertEquals;
 import static org.keycloak.testsuite.Assert.assertFalse;
@@ -78,13 +68,7 @@ public class MigrationTest extends AbstractKeycloakTest {
     private RealmResource migrationRealm2;
     private RealmResource migrationRealm3;
     private RealmResource masterRealm;
-
-    @Deployment
-    @TargetsContainer(DeploymentTargetModifier.AUTH_SERVER_CURRENT)
-    public static WebArchive deploy() {
-        return RunOnServerDeployment.create();
-    }
-
+        
     @Override
     public void addTestRealms(List<RealmRepresentation> testRealms) {
         log.info("Adding no test realms for migration test. Test realm should be migrated from previous vesrion.");
@@ -120,7 +104,6 @@ public class MigrationTest extends AbstractKeycloakTest {
         testMigrationTo2_2_0();
         testMigrationTo2_3_0();
         testMigrationTo2_5_0();
-        testMigrationTo2_5_1();
     }
     
     @Test
@@ -185,10 +168,6 @@ public class MigrationTest extends AbstractKeycloakTest {
         //https://github.com/keycloak/keycloak/pull/3630
         testDuplicateEmailSupport(masterRealm, migrationRealm);
     }
-
-    private void testMigrationTo2_5_1() {
-        testOfflineTokenLogin();
-    }
         
     private void testExtractRealmKeys(RealmResource masterRealm, RealmResource migrationRealm) {
         log.info("testing extract realm keys");
@@ -200,9 +179,7 @@ public class MigrationTest extends AbstractKeycloakTest {
 
         components = masterRealm.components().query(MASTER, KeyProvider.class.getName(), "rsa");
         assertEquals(1, components.size());
-
-        ComponentRepresentation component = testingClient.server(MASTER).fetch(RunHelpers.internalComponent(components.get(0).getId()));
-        assertEquals(expectedMasterRealmKey, component.getConfig().getFirst("privateKey"));
+        assertEquals(expectedMasterRealmKey, testingClient.testing(MASTER).getComponentConfig(components.get(0).getId()).getFirst("privateKey"));
 
         components = masterRealm.components().query(MASTER, KeyProvider.class.getName(), "hmac-generated");
         assertEquals(1, components.size());
@@ -212,9 +189,7 @@ public class MigrationTest extends AbstractKeycloakTest {
 
         components = migrationRealm.components().query(MIGRATION, KeyProvider.class.getName(), "rsa");
         assertEquals(1, components.size());
-
-        component = testingClient.server(MIGRATION).fetch(RunHelpers.internalComponent(components.get(0).getId()));
-        assertEquals(expectedMigrationRealmKey, component.getConfig().getFirst("privateKey"));
+        assertEquals(expectedMigrationRealmKey, testingClient.testing(MIGRATION).getComponentConfig(components.get(0).getId()).getFirst("privateKey"));
 
         components = migrationRealm.components().query(MIGRATION, KeyProvider.class.getName(), "hmac-generated");
         assertEquals(1, components.size());
@@ -361,30 +336,5 @@ public class MigrationTest extends AbstractKeycloakTest {
             assertTrue("LoginWithEmailAllowed should be enabled.", rep.isLoginWithEmailAllowed());
             assertFalse("DuplicateEmailsAllowed should be disabled.", rep.isDuplicateEmailsAllowed());
         }
-    }
-
-    private void testOfflineTokenLogin() {
-        if (isImportMigrationMode()) {
-            log.info("Skip offline token login test in the 'import' migrationMode");
-        } else {
-            log.info("test login with old offline token");
-            String oldOfflineToken = suiteContext.getMigrationContext().getOfflineToken();
-            Assert.assertNotNull(oldOfflineToken);
-
-            oauth.realm(MIGRATION);
-            oauth.clientId("migration-test-client");
-            OAuthClient.AccessTokenResponse response = oauth.doRefreshTokenRequest(oldOfflineToken, "b2c07929-69e3-44c6-8d7f-76939000b3e4");
-            AccessToken accessToken = oauth.verifyToken(response.getAccessToken());
-            assertEquals("migration-test-user", accessToken.getPreferredUsername());
-        }
-    }
-
-    private String getMigrationMode() {
-        return System.getProperty("migration.mode");
-    }
-
-    private boolean isImportMigrationMode() {
-        String mode = getMigrationMode();
-        return "import".equals(mode);
     }
 }

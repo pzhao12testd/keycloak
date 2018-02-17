@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.keycloak.testsuite.arquillian.migration.MigrationContext;
-
 import static org.keycloak.testsuite.util.MailServerConfiguration.FROM;
 import static org.keycloak.testsuite.util.MailServerConfiguration.HOST;
 import static org.keycloak.testsuite.util.MailServerConfiguration.PORT;
@@ -40,7 +38,6 @@ public final class SuiteContext {
     private final List<ContainerInfo> authServerBackendsInfo = new ArrayList<>();
 
     private ContainerInfo migratedAuthServerInfo;
-    private final MigrationContext migrationContext = new MigrationContext();
 
     private boolean adminPasswordUpdated;
     private final Map<String, String> smtpServer = new HashMap<>();
@@ -79,10 +76,6 @@ public final class SuiteContext {
 
     public ContainerInfo getMigratedAuthServerInfo() {
         return migratedAuthServerInfo;
-    }
-
-    public MigrationContext getMigrationContext() {
-        return migrationContext;
     }
 
     public void setMigratedAuthServerInfo(ContainerInfo migratedAuthServerInfo) {

@@ -29,18 +29,13 @@ import org.keycloak.representations.idm.ComponentRepresentation;
 import org.keycloak.representations.idm.KeysMetadataRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.keycloak.testsuite.AbstractKeycloakTest;
 import org.keycloak.testsuite.Assert;
 import org.keycloak.testsuite.util.UserBuilder;
 
 import java.io.File;
 import java.net.URL;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
 import static org.junit.Assert.assertEquals;
 import static org.keycloak.testsuite.admin.AbstractAdminTest.loadJson;
 
@@ -50,7 +45,7 @@ import static org.keycloak.testsuite.admin.AbstractAdminTest.loadJson;
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  * @author Stan Silvert ssilvert@redhat.com (C) 2016 Red Hat Inc.
  */
-public class ExportImportTest extends AbstractKeycloakTest {
+public class ExportImportTest extends AbstractExportImportTest {
 
     @Override
     public void addTestRealms(List<RealmRepresentation> testRealms) {
@@ -259,22 +254,6 @@ public class ExportImportTest extends AbstractKeycloakTest {
                 List<String> aList = a.getConfig().getList(entry.getKey());
                 Assert.assertNames(eList, aList.toArray(new String[] {}));
             }
-        }
-    }
-
-    private void clearExportImportProperties() {
-        // Clear export/import properties after test
-        Properties systemProps = System.getProperties();
-        Set<String> propsToRemove = new HashSet<String>();
-
-        for (Object key : systemProps.keySet()) {
-            if (key.toString().startsWith(ExportImportConfig.PREFIX)) {
-                propsToRemove.add(key.toString());
-            }
-        }
-
-        for (String propToRemove : propsToRemove) {
-            systemProps.remove(propToRemove);
         }
     }
 
